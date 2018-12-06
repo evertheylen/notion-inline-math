@@ -1,6 +1,7 @@
 // ==UserScript==
 // @name Inline Math for Notion.so
-// @version 0.2
+// @homepageURL https://www.notion.so/evertheylen/Notion-Inline-Math-9c5047a4e7c84643848b3630db8d5a5e
+// @version 0.2.1
 // @match https://www.notion.so/*
 // @grant GM_addStyle
 // @require https://cdn.jsdelivr.net/npm/katex@0.10.0/dist/katex.js
