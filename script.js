@@ -23,10 +23,10 @@ function rerender_all() {
     var code = document.querySelectorAll("span[style*=\"monospace\"]")
     code.forEach(function(el) {
         var s = el.textContent
-        if (s.startsWith("math:")) {
+        if (s.startsWith("$$") && s.endsWith("$$")) {
             el.style.color = null
             el.style.background = null
-            s = s.slice(5).trim()
+            s = s.slice(2,-2).trim()
             console.log("rendering ", s)
             katex.render(s, el, {throwOnError: false, font: 'mathit'})
         }
