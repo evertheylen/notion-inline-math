@@ -8,7 +8,6 @@
 // ==/UserScript==
 
 // Instructions for use:
-//   - Make sure you have at least one normal math block on your page
 //   - Use inline code starting with "math:". For example: `math: f(x) = x^2`
 //   - Press F2 to rerender all inline math. You can of course change the shortcut in the code below.
 //   - The inline math will revert to inline code when the block becomes active.
@@ -19,26 +18,61 @@ GM_addStyle(`
 }
 `)
 
+function render_one(el) {
+    var s = el.textContent
+    el.style.color = null
+    el.style.background = null
+    s = s.slice(5).trim()
+    console.log("rendering ", s)
+    katex.render(s, el, {throwOnError: false})
+}
+
 function rerender_all() {
-    var code = document.querySelectorAll("span[style*=\"monospace\"]")
-    code.forEach(function(el) {
-        var s = el.textContent
-        if (s.startsWith("math:")) {
-            el.style.color = null
-            el.style.background = null
-            s = s.slice(5).trim()
-            console.log("rendering ", s)
-            katex.render(s, el, {throwOnError: false, font: 'mathit'})
-        }
+    console.log("rerender all!")
+    var mathElement = Array.from(document.querySelectorAll("span[style*=\"monospace\"]"))
+    var filtered = mathElement.filter(el => el.textContent.startsWith("math:"))
+    filtered.forEach(function(el) {
+        render_one(el)
     })
 }
 
+function loadKatexStyleSheet() {
+    console.log('Loading KateX stylesheet')
+    var myCSS = document.createElement( "link" );
+    myCSS.rel = "stylesheet";
+    myCSS.href = "https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css";
+    // insert it at the end of the head in a legacy-friendly manner
+    document.head.insertBefore( myCSS, document.head.childNodes[ document.head.childNodes.length - 1 ].nextSibling );
+}
+
+function pollForMathContents(maxPolls = 20, interval = 200) {
+    var counter = maxPolls;
+    var checkExist = setInterval(function() {
+        var content = document.querySelectorAll("div.notion-page-content")
+        var contentExists = typeof(content) != 'undefined' && content != null
+
+        if (contentExists && content.length > 0) {
+            var math = content[0].querySelectorAll("span[style*=\"monospace\"]")
+
+            if (math.length > 0 || counter == 0) {
+                console.log("Math content found or poll limit reached");
+                clearInterval(checkExist);
+                rerender_all()
+            }
+        }
+        counter--
+    }, interval);
+}
+
+document.onreadystatechange = function() {
+    if (document.readyState === 'complete') {
+        loadKatexStyleSheet();
+        pollForMathContents(20, 200);
+    }
+};
+
 window.addEventListener('keydown', function(e) {
-    if (e.key == "F2" && !e.ctrlKey && !e.shiftKey && !e.altKey) {
-        console.log("rerender!");
+    if (e.key == "F2" && !e.ctrlKey && !e.shiftKey && !e.altKey && !e.metaKey) {
         rerender_all()
     }
 }, true)
-
-// I don't know a good way to trigger rerender automatically yet
-//document.addEventListener('DOMContentLoaded', rerender_all, false);
